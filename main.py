@@ -185,7 +185,7 @@ class SimpleIterationMethod(SolutionMethod):
         for i in numpy.arange(self._a, self._b, abs(self._b - self._a) / number_intervals):
             if abs(func_diff.subs(x, i).evalf()) > max_diff_value:
                 max_diff_value = abs(i)
-        lambda_coefficient = -max_diff_value
+        lambda_coefficient = -max_diff_value if abs(max_diff_value) < 1 else -(1 / max_diff_value)
         phi_function = x + lambda_coefficient * func
         phi_function_diff = 1 + lambda_coefficient * func_diff
         # проверка сходимости
@@ -202,6 +202,9 @@ class SimpleIterationMethod(SolutionMethod):
             x_i = x_i_plus_1
             x_i_plus_1 = phi_function.subs(x, x_i)
             phi_x_i_plus_1 = phi_function.subs(x, x_i_plus_1)
+            if abs(phi_x_i_plus_1) >= 1:
+                print("Условие сходимости для выбранного интервала не выполняется")
+                return None
             f_x_i_plus_1 = func.subs(x, x_i_plus_1)
             table.add_row([num_iter, x_i, x_i_plus_1, phi_x_i_plus_1, f_x_i_plus_1, abs(x_i_plus_1 - x_i)])
             num_iter += 1
