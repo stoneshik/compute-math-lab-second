@@ -171,7 +171,7 @@ def main() -> None:
             continue
         break
     solution_method = None
-    while solution_method is None:
+    while True:
         print("Выберите метод решения")
         [print(f"{i + 1}. {solution_method_iter.name}") for i, solution_method_iter in enumerate(solution_methods)]
         solution_num = int(input("Введите номер выбранного метода решения...\n"))
@@ -179,7 +179,19 @@ def main() -> None:
             print("Номер метода не найден, повторите ввод")
             continue
         solution_method = solution_methods[solution_num - 1]
-    solution_method = solution_method(equation, a, b)
+        break
+    while True:
+        epsilon = input(
+            "Введите погрешность вычислений (чтобы оставить значение по умолчанию - 0,001 нажмите Enter...\n")
+        if epsilon == '':
+            solution_method = solution_method(equation, a, b)
+            break
+        epsilon = float(epsilon)
+        if epsilon <= 0:
+            print("Значение погрешности должно быть больше нуля")
+            continue
+        solution_method = solution_method(equation, a, b, epsilon)
+        break
     if not solution_method.check():
         return
     table: PrettyTable = solution_method.calc()
