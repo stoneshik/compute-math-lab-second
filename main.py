@@ -60,10 +60,6 @@ class SolutionMethod(ABC):
             return False
         return True
 
-    @abstractmethod
-    def calc(self) -> (PrettyTable, None):
-        pass
-
     def draw(self) -> None:
         plt.figure()
         plt.xlabel(r'$x$', fontsize=14)
@@ -74,6 +70,10 @@ class SolutionMethod(ABC):
         y_values = [self._equation.equation_func.subs(x, x_iter) for x_iter in x_values]
         plt.plot(x_values, y_values)
         plt.show()
+
+    @abstractmethod
+    def calc(self) -> (PrettyTable, None):
+        pass
 
 
 class ChordMethod(SolutionMethod):
@@ -266,6 +266,41 @@ def input_from_console(equations, solution_methods) -> SolutionMethod:
     return solution_method
 
 
+def input_from_file(equations, solution_methods) -> SolutionMethod:
+    pass
+
+
+def input_data(equations, solution_methods) -> SolutionMethod:
+    while True:
+        print("Выберите способ ввода данных")
+        print("1. Через консоль\n2. Через файл")
+        num_variant = int(input("Введите выбранное номер выбранного варианта..."))
+        if 1 > num_variant > 2:
+            print("Введен не правильной номер, повторите ввод")
+            continue
+        break
+    if num_variant == 1:
+        return input_from_console(equations, solution_methods)
+    return input_from_file(equations, solution_methods)
+
+
+def output(table: PrettyTable) -> None:
+    while True:
+        print("Выберите способ вывода данных")
+        print("1. Через консоль\n2. Через файл")
+        num_variant = int(input("Введите выбранное номер выбранного варианта...\n"))
+        if 1 > num_variant > 2:
+            print("Введен не правильной номер, повторите ввод")
+            continue
+        break
+    if num_variant == 1:
+        print(table)
+        return
+    file_name: str = input("Введите название файла\n")
+    with open(file_name, 'w', encoding='utf-8') as file:
+        file.write(str(table))
+
+
 def main() -> None:
     x = Symbol('x')
     equations = (
@@ -282,7 +317,7 @@ def main() -> None:
     table: PrettyTable = solution_method.calc()
     if table is None:
         return
-    print(table)
+    output(table)
     solution_method.draw()
 
 
