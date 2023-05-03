@@ -171,7 +171,31 @@ class SimpleIterationMethod(SolutionMethod):
         )
 
     def calc(self) -> PrettyTable:
-        pass
+        table = PrettyTable()
+        table.field_names = self._field_names_table
+        func = self._equation.equation_func
+        func_diff = self._equation.get_diff()
+        func_diff_second = diff(func_diff)
+        x = Symbol('x')
+        a_i: float = self._a
+        b_i: float = self._b
+        if func.subs(x, a_i).evalf() * func_diff_second.subs(x, a_i).evalf() > 0:
+            x_n: float = a_i
+        else:
+            x_n: float = b_i
+        f_x_n: float = func.subs(x, x_n).evalf()
+        f_x_n_diff: float = func_diff.subs(x, x_n).evalf()
+        x_n_plus_1: float = x_n - (f_x_n / f_x_n_diff)
+        table.add_row(['0', x_n, f_x_n, f_x_n_diff, x_n_plus_1, abs(x_n_plus_1 - x_n)])
+        num_iter: int = 1
+        while abs(f_x_n) > self._epsilon:
+            x_n = x_n_plus_1
+            f_x_n = func.subs(x, x_n).evalf()
+            f_x_n_diff = func_diff.subs(x, x_n).evalf()
+            x_n_plus_1 = x_n - (f_x_n / f_x_n_diff)
+            table.add_row([num_iter, x_n, f_x_n, f_x_n_diff, x_n_plus_1, abs(x_n_plus_1 - x_n)])
+            num_iter += 1
+        return table
 
 
 def input_from_console(equations, solution_methods) -> SolutionMethod:
