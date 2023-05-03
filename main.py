@@ -40,19 +40,18 @@ class SolutionMethod(ABC):
         x = Symbol('x')
         value_a: float = func.subs(x, self.a).evalf()
         value_b: float = func.subs(x, self.b).evalf()
-        # проверка на разность знаков на концах интервала
-        if value_a * value_b > 0:
-            print(f"На отрезке [{self.a}; {self.b}] отсутсвуют корни, либо их более одного")
-            return False
         # проверка на монотонность для производной на интервале
         number_intervals: int = 100
         func_diff = self.equation.get_diff()
-        first_value_diff = func_diff.subs(x, self.a).evalf()
+        first_value_diff: float = func_diff.subs(x, self.a).evalf()
         for i in numpy.arange(self.a, self.b, abs(self.b - self.a) / number_intervals):
-            v = abs(first_value_diff * func.subs(x, i).evalf())
-            if v < 0:
+            if first_value_diff * func_diff.subs(x, i).evalf() < 0:
                 print(f"На отрезке [{self.a}; {self.b}] более одного корня")
                 return False
+        # проверка на разность знаков на концах интервала
+        if value_a * value_b > 0:
+            print(f"На отрезке [{self.a}; {self.b}] отсутсвуют корни")
+            return False
         return True
 
     @abstractmethod
