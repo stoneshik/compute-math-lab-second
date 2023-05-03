@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 import numpy.ma
 import pandas as pd
 import matplotlib.pyplot as plt
+from prettytable import PrettyTable
 from sympy import (
     init_printing,
     diff,
@@ -28,34 +29,40 @@ class Equation:
 
 
 class SolutionMethod(ABC):
-    def __init__(self, equation: Equation, a: float, b: float) -> None:
+    """
+    Базовый абстрактный класс для классов реализаций методов решения ур-й
+    """
+    def __init__(self, equation: Equation, a: float, b: float, epsilon: float, field_names_table: list) -> None:
         assert a != b, "Значения a и b должны быть различны"
         assert a < b, "Значение a должно быть меньше b"
-        self.equation = equation
-        self.a = a
-        self.b = b
+        assert epsilon > 0, "Значение эпсилон должно быть больше нуля"
+        self._equation = equation
+        self._a = a
+        self._b = b
+        self._epsilon = epsilon
+        self._field_names_table = field_names_table
 
     def check(self) -> bool:
-        func = self.equation.equation_func
+        func = self._equation.equation_func
         x = Symbol('x')
-        value_a: float = func.subs(x, self.a).evalf()
-        value_b: float = func.subs(x, self.b).evalf()
+        value_a: float = func.subs(x, self._a).evalf()
+        value_b: float = func.subs(x, self._b).evalf()
         # проверка на монотонность для производной на интервале
         number_intervals: int = 100
-        func_diff = self.equation.get_diff()
-        first_value_diff: float = func_diff.subs(x, self.a).evalf()
-        for i in numpy.arange(self.a, self.b, abs(self.b - self.a) / number_intervals):
+        func_diff = self._equation.get_diff()
+        first_value_diff: float = func_diff.subs(x, self._a).evalf()
+        for i in numpy.arange(self._a, self._b, abs(self._b - self._a) / number_intervals):
             if first_value_diff * func_diff.subs(x, i).evalf() < 0:
-                print(f"На отрезке [{self.a}; {self.b}] более одного корня")
+                print(f"На отрезке [{self._a}; {self._b}] более одного корня")
                 return False
         # проверка на разность знаков на концах интервала
         if value_a * value_b > 0:
-            print(f"На отрезке [{self.a}; {self.b}] отсутсвуют корни")
+            print(f"На отрезке [{self._a}; {self._b}] отсутсвуют корни")
             return False
         return True
 
     @abstractmethod
-    def calc(self):
+    def calc(self) -> PrettyTable:
         pass
 
 
@@ -65,11 +72,38 @@ class ChordMethod(SolutionMethod):
     """
     name: str = 'метод хорд'
 
-    def __init__(self, equation: Equation, a: float, b: float) -> None:
-        super().__init__(equation, a, b)
+    def __init__(self, equation: Equation, a: float, b: float, epsilon: float = 0.001) -> None:
+        super().__init__(
+            equation, a, b, epsilon,
+            ['№ итерации', 'a', 'b', 'x', 'F(a)', 'F(b)', 'F(x)', '|Xn+1 - Xn|']
+        )
 
-    def calc(self):
-        pass
+    def calc(self) -> PrettyTable:
+        table = PrettyTable()
+        table.field_names = self._field_names_table
+        func = self._equation.equation_func
+        x = Symbol('x')
+        a_i: float = self._a
+        b_i: float = self._b
+        x_i: float = a_i - (
+                (b_i - a_i) / (func.subs(x, b_i).evalf() - func.subs(x, a_i).evalf())) * func.subs(x, a_i).evalf()
+        f_xi: float = func.subs(x, x_i).evalf()
+        f_ai: float = func.subs(x, a_i).evalf()
+        f_bi: float = func.subs(x, b_i).evalf()
+        table.add_row(['0', a_i, b_i, x_i, f_ai, f_bi, f_xi, abs(a_i - x_i)])
+        num_iter: int = 1
+        while abs(f_xi) > self._epsilon:
+            if f_ai * f_xi < 0:
+                b_i = x_i
+                f_bi = func.subs(x, b_i).evalf()
+            else:
+                a_i = x_i
+                f_ai = func.subs(x, a_i).evalf()
+            x_i = (a_i * f_bi - b_i * f_ai) / (f_bi - f_ai)
+            f_xi = func.subs(x, x_i).evalf()
+            table.add_row([num_iter, a_i, b_i, x_i, f_ai, f_bi, f_xi, abs(a_i - x_i)])
+            num_iter += 1
+        return table
 
 
 class NewtonMethod(SolutionMethod):
@@ -78,10 +112,13 @@ class NewtonMethod(SolutionMethod):
     """
     name: str = 'метод Ньютона'
 
-    def __init__(self, equation: Equation, a: float, b: float) -> None:
-        super().__init__(equation, a, b)
+    def __init__(self, equation: Equation, a: float, b: float, epsilon: float = 0.001) -> None:
+        super().__init__(
+            equation, a, b, epsilon,
+            ['№ итерации', 'Xn', 'f(Xn)', "f'(Xn)", 'Xn+1', '|Xn+1 - Xn|']
+        )
 
-    def calc(self):
+    def calc(self) -> PrettyTable:
         pass
 
 
@@ -91,10 +128,13 @@ class SimpleIterationMethod(SolutionMethod):
     """
     name: str = 'метод простой итерации'
 
-    def __init__(self, equation: Equation, a: float, b: float) -> None:
-        super().__init__(equation, a, b)
+    def __init__(self, equation: Equation, a: float, b: float, epsilon: float = 0.001) -> None:
+        super().__init__(
+            equation, a, b, epsilon,
+            ['№ итерации', 'Xi', 'Xi+1', 'φ(Xi+1)', 'f(Xi+1)', '|Xi+1 - Xi|']
+        )
 
-    def calc(self):
+    def calc(self) -> PrettyTable:
         pass
 
 
@@ -142,7 +182,8 @@ def main() -> None:
     solution_method = solution_method(equation, a, b)
     if not solution_method.check():
         return
-    solution_method.calc()
+    table: PrettyTable = solution_method.calc()
+    print(table)
 
 
 if __name__ == '__main__':
