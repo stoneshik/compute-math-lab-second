@@ -9,7 +9,6 @@ from sympy import (
     init_printing,
     diff,
     latex,
-    symbols,
     Symbol,
 )
 
@@ -118,8 +117,45 @@ class NewtonMethod(SolutionMethod):
             ['№ итерации', 'Xn', 'f(Xn)', "f'(Xn)", 'Xn+1', '|Xn+1 - Xn|']
         )
 
+    def check(self) -> bool:
+        result = super().check()
+        if not result:
+            return False
+        x = Symbol('x')
+        # проверка на то равна ли производная нулю на интервале
+        func_diff = self._equation.get_diff()
+        measurement: float = 0.00001
+        if abs(func_diff.subs(x, self._a)) <= measurement or abs(func_diff.subs(x, self._b)) <= measurement:
+            print(f"На отрезке [{self._a}; {self._b}] значение прозводной близко к нулю, что не позволяет решить уравнение методом Ньютона")
+            return False
+        return True
+
     def calc(self) -> PrettyTable:
-        pass
+        table = PrettyTable()
+        table.field_names = self._field_names_table
+        func = self._equation.equation_func
+        func_diff = self._equation.get_diff()
+        func_diff_second = diff(func_diff)
+        x = Symbol('x')
+        a_i: float = self._a
+        b_i: float = self._b
+        if func.subs(x, a_i).evalf() * func_diff_second.subs(x, a_i).evalf() > 0:
+            x_n: float = a_i
+        else:
+            x_n: float = b_i
+        f_x_n: float = func.subs(x, x_n).evalf()
+        f_x_n_diff: float = func_diff.subs(x, x_n).evalf()
+        x_n_plus_1: float = x_n - (f_x_n / f_x_n_diff)
+        table.add_row(['0', x_n, f_x_n, f_x_n_diff, x_n_plus_1, abs(x_n_plus_1 - x_n)])
+        num_iter: int = 1
+        while abs(f_x_n) > self._epsilon:
+            x_n = x_n_plus_1
+            f_x_n = func.subs(x, x_n).evalf()
+            f_x_n_diff = func_diff.subs(x, x_n).evalf()
+            x_n_plus_1 = x_n - (f_x_n / f_x_n_diff)
+            table.add_row([num_iter, x_n, f_x_n, f_x_n_diff, x_n_plus_1, abs(x_n_plus_1 - x_n)])
+            num_iter += 1
+        return table
 
 
 class SimpleIterationMethod(SolutionMethod):
@@ -138,16 +174,7 @@ class SimpleIterationMethod(SolutionMethod):
         pass
 
 
-def main() -> None:
-    x = Symbol('x')
-    equations = (
-        Equation(x ** 3 - 2.92 * x ** 2 + 1.435 * x + 0.791),
-    )
-    solution_methods = (
-        ChordMethod,
-        NewtonMethod,
-        SimpleIterationMethod
-    )
+def input_from_console(equations, solution_methods) -> SolutionMethod:
     equation = None
     while True:
         print("Выберите уравнение:")
@@ -158,8 +185,6 @@ def main() -> None:
             continue
         equation = equations[equation_num - 1]
         break
-    a: float = 0
-    b: float = 0
     while True:
         print("Выберите границы интервала:")
         a, b = (float(i) for i in input("Введите значения a и b через пробел...\n").split())
@@ -175,7 +200,7 @@ def main() -> None:
         print("Выберите метод решения")
         [print(f"{i + 1}. {solution_method_iter.name}") for i, solution_method_iter in enumerate(solution_methods)]
         solution_num = int(input("Введите номер выбранного метода решения...\n"))
-        if solution_num < 1 or solution_num > len(equations):
+        if solution_num < 1 or solution_num > len(solution_methods):
             print("Номер метода не найден, повторите ввод")
             continue
         solution_method = solution_methods[solution_num - 1]
@@ -192,6 +217,20 @@ def main() -> None:
             continue
         solution_method = solution_method(equation, a, b, epsilon)
         break
+    return solution_method
+
+
+def main() -> None:
+    x = Symbol('x')
+    equations = (
+        Equation(x ** 3 - 2.92 * x ** 2 + 1.435 * x + 0.791),
+    )
+    solution_methods = (
+        ChordMethod,
+        NewtonMethod,
+        SimpleIterationMethod
+    )
+    solution_method = input_from_console(equations, solution_methods)
     if not solution_method.check():
         return
     table: PrettyTable = solution_method.calc()
