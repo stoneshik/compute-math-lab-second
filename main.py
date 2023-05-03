@@ -1,8 +1,8 @@
 import math
 from abc import ABC, abstractmethod
 
-import numpy.ma
-import pandas as pd
+import numpy
+import matplotlib
 import matplotlib.pyplot as plt
 from prettytable import PrettyTable
 from sympy import (
@@ -10,14 +10,12 @@ from sympy import (
     diff,
     latex,
     Symbol,
-    Interval
 )
-from sympy.calculus.util import maximum
 
 
 class Equation:
     """
-    Класс для уравнений
+    Класс обертка для уравнений
     """
     def __init__(self, equation_func) -> None:
         self.equation_func = equation_func
@@ -65,6 +63,17 @@ class SolutionMethod(ABC):
     @abstractmethod
     def calc(self) -> (PrettyTable, None):
         pass
+
+    def draw(self) -> None:
+        plt.figure()
+        plt.xlabel(r'$x$', fontsize=14)
+        plt.ylabel(r'$F(x)$', fontsize=14)
+        plt.title(r"График функции $F(x)$")
+        x = Symbol('x')
+        x_values = numpy.arange(self._a - 1, self._b + 1, 0.01)
+        y_values = [self._equation.equation_func.subs(x, x_iter) for x_iter in x_values]
+        plt.plot(x_values, y_values)
+        plt.show()
 
 
 class ChordMethod(SolutionMethod):
@@ -274,8 +283,10 @@ def main() -> None:
     if table is None:
         return
     print(table)
+    solution_method.draw()
 
 
 if __name__ == '__main__':
+    matplotlib.use('TkAgg')
     init_printing()
     main()
