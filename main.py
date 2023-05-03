@@ -10,7 +10,9 @@ from sympy import (
     diff,
     latex,
     Symbol,
+    Interval
 )
+from sympy.calculus.util import maximum
 
 
 class Equation:
@@ -61,7 +63,7 @@ class SolutionMethod(ABC):
         return True
 
     @abstractmethod
-    def calc(self) -> PrettyTable:
+    def calc(self) -> (PrettyTable, None):
         pass
 
 
@@ -77,7 +79,7 @@ class ChordMethod(SolutionMethod):
             ['№ итерации', 'a', 'b', 'x', 'F(a)', 'F(b)', 'F(x)', '|Xn+1 - Xn|']
         )
 
-    def calc(self) -> PrettyTable:
+    def calc(self) -> (PrettyTable, None):
         table = PrettyTable()
         table.field_names = self._field_names_table
         func = self._equation.equation_func
@@ -130,7 +132,7 @@ class NewtonMethod(SolutionMethod):
             return False
         return True
 
-    def calc(self) -> PrettyTable:
+    def calc(self) -> (PrettyTable, None):
         table = PrettyTable()
         table.field_names = self._field_names_table
         func = self._equation.equation_func
@@ -170,30 +172,38 @@ class SimpleIterationMethod(SolutionMethod):
             ['№ итерации', 'Xi', 'Xi+1', 'φ(Xi+1)', 'f(Xi+1)', '|Xi+1 - Xi|']
         )
 
-    def calc(self) -> PrettyTable:
+    def calc(self) -> (PrettyTable, None):
         table = PrettyTable()
         table.field_names = self._field_names_table
         func = self._equation.equation_func
         func_diff = self._equation.get_diff()
-        func_diff_second = diff(func_diff)
         x = Symbol('x')
         a_i: float = self._a
         b_i: float = self._b
-        if func.subs(x, a_i).evalf() * func_diff_second.subs(x, a_i).evalf() > 0:
-            x_n: float = a_i
-        else:
-            x_n: float = b_i
-        f_x_n: float = func.subs(x, x_n).evalf()
-        f_x_n_diff: float = func_diff.subs(x, x_n).evalf()
-        x_n_plus_1: float = x_n - (f_x_n / f_x_n_diff)
-        table.add_row(['0', x_n, f_x_n, f_x_n_diff, x_n_plus_1, abs(x_n_plus_1 - x_n)])
+        max_diff_value: float = 0.0
+        number_intervals: int = 100
+        for i in numpy.arange(self._a, self._b, abs(self._b - self._a) / number_intervals):
+            if abs(func_diff.subs(x, i).evalf()) > max_diff_value:
+                max_diff_value = abs(i)
+        lambda_coefficient = -max_diff_value
+        phi_function = x + lambda_coefficient * func
+        phi_function_diff = 1 + lambda_coefficient * func_diff
+        # проверка сходимости
+        if abs(phi_function_diff.subs(x, a_i)) >= 1 or abs(phi_function_diff.subs(x, b_i)) >= 1:
+            print("Условие сходимости для выбранного интервала не выполняется")
+            return None
+        x_i: float = a_i
+        x_i_plus_1: float = phi_function.subs(x, x_i)
+        phi_x_i_plus_1: float = phi_function.subs(x, x_i_plus_1)
+        f_x_i_plus_1: float = func.subs(x, x_i_plus_1)
+        table.add_row(['0', x_i, x_i_plus_1, phi_x_i_plus_1, f_x_i_plus_1, abs(x_i_plus_1 - x_i)])
         num_iter: int = 1
-        while abs(f_x_n) > self._epsilon:
-            x_n = x_n_plus_1
-            f_x_n = func.subs(x, x_n).evalf()
-            f_x_n_diff = func_diff.subs(x, x_n).evalf()
-            x_n_plus_1 = x_n - (f_x_n / f_x_n_diff)
-            table.add_row([num_iter, x_n, f_x_n, f_x_n_diff, x_n_plus_1, abs(x_n_plus_1 - x_n)])
+        while abs(x_i_plus_1 - x_i) > self._epsilon:
+            x_i = x_i_plus_1
+            x_i_plus_1 = phi_function.subs(x, x_i)
+            phi_x_i_plus_1 = phi_function.subs(x, x_i_plus_1)
+            f_x_i_plus_1 = func.subs(x, x_i_plus_1)
+            table.add_row([num_iter, x_i, x_i_plus_1, phi_x_i_plus_1, f_x_i_plus_1, abs(x_i_plus_1 - x_i)])
             num_iter += 1
         return table
 
@@ -258,6 +268,8 @@ def main() -> None:
     if not solution_method.check():
         return
     table: PrettyTable = solution_method.calc()
+    if table is None:
+        return
     print(table)
 
 
