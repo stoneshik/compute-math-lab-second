@@ -40,6 +40,9 @@ class SolutionMethod(ABC):
         self._b = b
         self._epsilon = epsilon
         self._field_names_table = field_names_table
+        self._found_root: float = 0.0
+        self._function_value_in_found_root: float = 0.0
+        self._num_iteration_for_found: int = 0
 
     def check(self) -> bool:
         func = self._equation.equation_func
@@ -59,6 +62,11 @@ class SolutionMethod(ABC):
             print(f"На отрезке [{self._a}; {self._b}] отсутсвуют корни")
             return False
         return True
+
+    def output_result(self) -> str:
+        return f"Найденный корень уравнения: {self._found_root}\n" + \
+               f"Значение функции в корне: {self._function_value_in_found_root}" + \
+               f"\nЧисло итераций: {self._num_iteration_for_found}"
 
     def draw(self) -> None:
         plt.figure()
@@ -113,6 +121,9 @@ class ChordMethod(SolutionMethod):
             f_xi = func.subs(x, x_i).evalf()
             table.add_row([num_iter, a_i, b_i, x_i, f_ai, f_bi, f_xi, abs(a_i - x_i)])
             num_iter += 1
+        self._found_root = x_i
+        self._function_value_in_found_root = f_xi
+        self._num_iteration_for_found = num_iter
         return table
 
 
@@ -163,9 +174,16 @@ class NewtonMethod(SolutionMethod):
             x_n = x_n_plus_1
             f_x_n = func.subs(x, x_n).evalf()
             f_x_n_diff = func_diff.subs(x, x_n).evalf()
+            if f_x_n_diff == 0.0:
+                print(
+                    f"На отрезке [{self._a}; {self._b}] значение прозводной равно нулю, что не позволяет решить уравнение методом Ньютона")
+                return None
             x_n_plus_1 = x_n - (f_x_n / f_x_n_diff)
             table.add_row([num_iter, x_n, f_x_n, f_x_n_diff, x_n_plus_1, abs(x_n_plus_1 - x_n)])
             num_iter += 1
+        self._found_root = x_n_plus_1
+        self._function_value_in_found_root = func_diff.subs(x, x_n_plus_1).evalf()
+        self._num_iteration_for_found = num_iter
         return table
 
 
@@ -217,6 +235,9 @@ class SimpleIterationMethod(SolutionMethod):
             f_x_i_plus_1 = func.subs(x, x_i_plus_1)
             table.add_row([num_iter, x_i, x_i_plus_1, phi_x_i_plus_1, f_x_i_plus_1, abs(x_i_plus_1 - x_i)])
             num_iter += 1
+        self._found_root = x_i_plus_1
+        self._function_value_in_found_root = f_x_i_plus_1
+        self._num_iteration_for_found = num_iter
         return table
 
 
@@ -310,7 +331,7 @@ def input_data(equations, solution_methods) -> (SolutionMethod, None):
     return input_from_file(equations, solution_methods)
 
 
-def output(table: PrettyTable) -> None:
+def output(table: PrettyTable, solution_method: SolutionMethod) -> None:
     while True:
         print("Выберите способ вывода данных")
         print("1. Через консоль\n2. Через файл")
@@ -321,10 +342,12 @@ def output(table: PrettyTable) -> None:
         break
     if num_variant == 1:
         print(table)
+        print(solution_method.output_result())
         return
     file_name: str = input("Введите название файла\n")
     with open(file_name, 'w', encoding='utf-8') as file:
         file.write(str(table))
+        file.write(solution_method.output_result())
 
 
 def main() -> None:
@@ -345,7 +368,7 @@ def main() -> None:
     table: PrettyTable = solution_method.calc()
     if table is None:
         return
-    output(table)
+    output(table, solution_method)
     solution_method.draw()
 
 
