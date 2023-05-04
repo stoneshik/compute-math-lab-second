@@ -253,7 +253,7 @@ def input_from_console(equations, solution_methods) -> SolutionMethod:
         break
     while True:
         epsilon = input(
-            "Введите погрешность вычислений (чтобы оставить значение по умолчанию - 0,001 нажмите Enter...\n")
+            "Введите погрешность вычислений (чтобы оставить значение по умолчанию - 0,001 нажмите Enter)...\n")
         if epsilon == '':
             solution_method = solution_method(equation, a, b)
             break
@@ -266,17 +266,43 @@ def input_from_console(equations, solution_methods) -> SolutionMethod:
     return solution_method
 
 
-def input_from_file(equations, solution_methods) -> SolutionMethod:
-    pass
+def input_from_file(equations, solution_methods) -> (SolutionMethod, None):
+    file_name: str = input("Введите название файла\n")
+    with open(file_name, 'r', encoding='utf-8') as file:
+        equation_num = int(file.readline())
+        if equation_num < 1 or equation_num > len(equations):
+            print("Номер уравнения не найден, повторите ввод")
+            return None
+        equation = equations[equation_num - 1]
+        a, b = (float(i) for i in file.readline().split())
+        if a == b:
+            print("Значения должны быть различны")
+            return None
+        elif a > b:
+            print("Значение a должно быть меньше b")
+            return None
+        solution_num = int(file.readline())
+        if solution_num < 1 or solution_num > len(solution_methods):
+            print("Номер метода не найден, повторите ввод")
+            return None
+        solution_method = solution_methods[solution_num - 1]
+        epsilon = file.readline()
+        if epsilon == '':
+            return solution_method(equation, a, b)
+        epsilon = float(epsilon)
+        if epsilon <= 0:
+            print("Значение погрешности должно быть больше нуля")
+            return None
+        return solution_method(equation, a, b, epsilon)
 
 
-def input_data(equations, solution_methods) -> SolutionMethod:
+def input_data(equations, solution_methods) -> (SolutionMethod, None):
     while True:
         print("Выберите способ ввода данных")
         print("1. Через консоль\n2. Через файл")
-        num_variant = int(input("Введите выбранное номер выбранного варианта..."))
+        num_variant = int(input("Введите номер выбранного варианта...\n"))
         if 1 > num_variant > 2:
-            print("Введен не правильной номер, повторите ввод")
+            print("Введен неправильной номер, повторите ввод")
             continue
         break
     if num_variant == 1:
@@ -288,9 +314,9 @@ def output(table: PrettyTable) -> None:
     while True:
         print("Выберите способ вывода данных")
         print("1. Через консоль\n2. Через файл")
-        num_variant = int(input("Введите выбранное номер выбранного варианта...\n"))
+        num_variant = int(input("Введите номер выбранного варианта...\n"))
         if 1 > num_variant > 2:
-            print("Введен не правильной номер, повторите ввод")
+            print("Введен неправильной номер, повторите ввод")
             continue
         break
     if num_variant == 1:
@@ -311,7 +337,9 @@ def main() -> None:
         NewtonMethod,
         SimpleIterationMethod
     )
-    solution_method = input_from_console(equations, solution_methods)
+    solution_method = input_data(equations, solution_methods)
+    if solution_method is None:
+        return
     if not solution_method.check():
         return
     table: PrettyTable = solution_method.calc()
