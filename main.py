@@ -95,7 +95,7 @@ class ChordMethod(SolutionMethod):
     def __init__(self, equation: Equation, a: float, b: float, epsilon: float = 0.001) -> None:
         super().__init__(
             equation, a, b, epsilon,
-            ['№ итерации', 'a', 'b', 'x', 'F(a)', 'F(b)', 'F(x)', '|Xn+1 - Xn|']
+            ['№ итерации', 'a', 'b', 'x', 'f(a)', 'f(b)', 'f(x)', '|Xn+1 - Xn|']
         )
 
     def calc(self) -> (PrettyTable, None):
@@ -356,12 +356,13 @@ def output(table: PrettyTable, solution_method: SolutionMethod) -> None:
 
 def main() -> None:
     x = Symbol('x')
+    # ссылка на Desmos с графиками https://www.desmos.com/calculator/b8cfcxolgp
     equations = (
-        Equation(x ** 3 - 2.92 * x ** 2 + 1.435 * x + 0.791),
-        Equation(x ** 3 - x + 4),
-        Equation(sin(x) + 0.1 * x ** 2),
-        Equation(exp(2*x) + 3 * x ** 2),
-        Equation(x ** 12 - 3.012 * x ** 5 + 5.14 * x + 6.718)
+        Equation(x ** 3 - 2.92 * x ** 2 + 1.435 * x + 0.791),  # x1=2.00822623567; x2=1.23085036770; x3=-0.320006647974
+        Equation(x ** 3 - x + 4),  # x1=-1.79629701108907
+        Equation(sin(x) + 0.1 * x ** 2),  # x1=-2.47894464825110; x2=0
+        Equation(exp(2*x) + 3.14*x),  # x1=-0.209501195322531
+        Equation(x ** 12 - 3.012 * x ** 5 + 5.14 * x)  # x1=-1.04252691662422; x2=0
     )
     solution_methods = (
         ChordMethod,
