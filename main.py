@@ -219,10 +219,13 @@ class SimpleIterationMethod(SolutionMethod):
         phi_function = x + lambda_coefficient * func
         phi_function_diff = 1 + lambda_coefficient * func_diff
         # проверка сходимости
-        print(f"a {abs(phi_function_diff.subs(x, a_i))} b {abs(phi_function_diff.subs(x, b_i))}")
         if abs(phi_function_diff.subs(x, a_i)) >= 1 or abs(phi_function_diff.subs(x, b_i)) >= 1:
-            print("Условие сходимости для выбранного интервала не выполняется")
-            return None
+            # используем другой вариант
+            phi_function = x + func
+            phi_function_diff = 1 + func_diff
+            if abs(phi_function_diff.subs(x, a_i)) >= 1 or abs(phi_function_diff.subs(x, b_i)) >= 1:
+                print("Условие сходимости для выбранного интервала не выполняется")
+                return None
         x_i: float = a_i
         x_i_plus_1: float = phi_function.subs(x, x_i)
         phi_x_i_plus_1: float = phi_function.subs(x, x_i_plus_1)
