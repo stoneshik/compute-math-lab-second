@@ -9,6 +9,8 @@ from sympy import (
     init_printing,
     diff,
     latex,
+    sin,
+    exp,
     Symbol,
 )
 
@@ -210,12 +212,14 @@ class SimpleIterationMethod(SolutionMethod):
         max_diff_value: float = 0.0
         number_intervals: int = 100
         for i in numpy.arange(self._a, self._b, abs(self._b - self._a) / number_intervals):
-            if abs(func_diff.subs(x, i).evalf()) > max_diff_value:
-                max_diff_value = abs(i)
-        lambda_coefficient = -max_diff_value if abs(max_diff_value) < 1 else -(1 / max_diff_value)
+            f_i = abs(func_diff.subs(x, i).evalf())
+            if f_i > max_diff_value:
+                max_diff_value = f_i
+        lambda_coefficient = -(1 / max_diff_value)
         phi_function = x + lambda_coefficient * func
         phi_function_diff = 1 + lambda_coefficient * func_diff
         # проверка сходимости
+        print(f"a {abs(phi_function_diff.subs(x, a_i))} b {abs(phi_function_diff.subs(x, b_i))}")
         if abs(phi_function_diff.subs(x, a_i)) >= 1 or abs(phi_function_diff.subs(x, b_i)) >= 1:
             print("Условие сходимости для выбранного интервала не выполняется")
             return None
@@ -229,9 +233,6 @@ class SimpleIterationMethod(SolutionMethod):
             x_i = x_i_plus_1
             x_i_plus_1 = phi_function.subs(x, x_i)
             phi_x_i_plus_1 = phi_function.subs(x, x_i_plus_1)
-            if abs(phi_x_i_plus_1) >= 1:
-                print("Условие сходимости для выбранного интервала не выполняется")
-                return None
             f_x_i_plus_1 = func.subs(x, x_i_plus_1)
             table.add_row([num_iter, x_i, x_i_plus_1, phi_x_i_plus_1, f_x_i_plus_1, abs(x_i_plus_1 - x_i)])
             num_iter += 1
@@ -354,6 +355,10 @@ def main() -> None:
     x = Symbol('x')
     equations = (
         Equation(x ** 3 - 2.92 * x ** 2 + 1.435 * x + 0.791),
+        Equation(x ** 3 - x + 4),
+        Equation(sin(x) + 0.1 * x ** 2),
+        Equation(exp(2*x) + 3 * x ** 2),
+        Equation(x ** 12 - 3.012 * x ** 5 + 5.14 * x + 6.718)
     )
     solution_methods = (
         ChordMethod,
