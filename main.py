@@ -326,7 +326,7 @@ def input_data(equations, solution_methods) -> (SolutionMethod, None):
         print("Выберите способ ввода данных")
         print("1. Через консоль\n2. Через файл")
         num_variant = int(input("Введите номер выбранного варианта...\n"))
-        if 1 > num_variant > 2:
+        if num_variant < 1 or num_variant > 2:
             print("Введен неправильной номер, повторите ввод")
             continue
         break
@@ -340,7 +340,7 @@ def output(table: PrettyTable, solution_method: SolutionMethod) -> None:
         print("Выберите способ вывода данных")
         print("1. Через консоль\n2. Через файл")
         num_variant = int(input("Введите номер выбранного варианта...\n"))
-        if 1 > num_variant > 2:
+        if num_variant < 1 or num_variant > 2:
             print("Введен неправильной номер, повторите ввод")
             continue
         break
