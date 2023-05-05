@@ -23,7 +23,7 @@ class SimpleIterationMethodForSystem:
                  first_approach: tuple,
                  interval_for_x1: tuple,
                  interval_for_x2: tuple,
-                 epsilon: float) -> None:
+                 epsilon: float = 0.001) -> None:
         self._system_equations = system_equations
         self._first_approach = first_approach
         self._interval_for_x1 = interval_for_x1
@@ -97,7 +97,8 @@ class SimpleIterationMethodForSystem:
         return table
 
     def check_calc(self):
-        pass
+        print("Проверка осуществляется путем расчета вектора невязки")
+
 
     def draw(self) -> None:
         pass
@@ -108,23 +109,79 @@ class SimpleIterationMethodForSystem:
                f"\nЧисло итераций: {self._num_iteration_for_found}"
 
 
+def input_intervals(approach_value: float) -> tuple:
+    while True:
+        min_value, max_value = (
+            float(i) for i in input("Введите значения минимума и максимум через пробел...\n").split())
+        if min_value == max_value:
+            print("Введенные значения должны отличаться")
+            continue
+        if min_value > max_value:
+            print("Сначала должен быть введен минимум, а потом максимум")
+            continue
+        if approach_value < min_value or approach_value > max_value:
+            print("Введенный интервал не покрывает приближение")
+            continue
+        return min_value, max_value
+
+
+def input_data(systems_equation) -> SimpleIterationMethodForSystem:
+    system_equation = None
+    while True:
+        print("Выберите уравнение:")
+        [print(f"{i + 1}. {system_equation_iter.get_string()}") for i, system_equation_iter in
+         enumerate(systems_equation)]
+        equation_num = int(input("Введите номер выбранной системы уравнения...\n"))
+        if equation_num < 1 or equation_num > len(systems_equation):
+            print("Номер системы уравнений не найден, повторите ввод")
+            continue
+        system_equation = systems_equation[equation_num - 1]
+        break
+    while True:
+        print("Введите начальное приближение:")
+        first_approach: tuple = tuple([float(i) for i in input("Введите значения x1 и x2 через пробел...\n").split()])
+        if len(first_approach) != 2:
+            print("Должно быть введено 2 значения")
+            continue
+        break
+    print("Определение области сходимости G")
+    print("Введите значения интервала для x1")
+    interval_for_x1: tuple = input_intervals(first_approach[0])
+    print("Введите значения интервала для x2")
+    interval_for_x2: tuple = input_intervals(first_approach[1])
+    while True:
+        epsilon = input(
+            "Введите погрешность вычислений (чтобы оставить значение по умолчанию - 0,001 нажмите Enter)...\n")
+        if epsilon == '':
+            return SimpleIterationMethodForSystem(system_equation, first_approach, interval_for_x1, interval_for_x2)
+        epsilon = float(epsilon)
+        if epsilon <= 0:
+            print("Значение погрешности должно быть больше нуля")
+            continue
+        return SimpleIterationMethodForSystem(
+            system_equation, first_approach, interval_for_x1, interval_for_x2, epsilon)
+
+
 def main_for_system_equations():
     x1 = Symbol('x1')
     x2 = Symbol('x2')
     # ссылка на Desmos с графиками https://www.desmos.com/calculator/b8cfcxolgp
-    system_equation = (
+    systems_equation = (
         SystemEquation((
             0.1 * x1 ** 2 + x1 + 0.2 * x2 ** 2 - 0.3,
             0.2 * x1 ** 2 + x2 + 0.1 * x1 * x2 - 0.7
         )),
     )
+    solution_method = input_data(systems_equation)
     if solution_method is None:
         return
-    if not solution_method.check():
+    if not solution_method.check_convergence():
+        print("Уравнение не сходится в выбранной области")
         return
     table: PrettyTable = solution_method.calc()
     if table is None:
         return
-    output(table, solution_method)
+    solution_method.output_result()
+
     solution_method.draw()
 
