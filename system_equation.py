@@ -2,6 +2,7 @@ import numpy
 import matplotlib.pyplot as plt
 from prettytable import PrettyTable
 from sympy import latex, diff, Symbol, Abs
+from sympy.plotting import plot3d
 
 
 class SystemEquation:
@@ -109,15 +110,12 @@ class SimpleIterationMethodForSystem:
         print(f"r1 = {r1}\nr2 = {r2}")
 
     def draw(self) -> None:
-        plt.figure()
-        plt.xlabel(r'$x1$', fontsize=14)
-        plt.ylabel(r'$x2$', fontsize=14)
-        plt.title(r"График функции $F(x_1, x_2)$")
-        x = Symbol('x1')
-        x_values = numpy.arange(self._a - 1, self._b + 1, 0.01)
-        y_values = [self._equation.equation_func.subs(x, x_iter) for x_iter in x_values]
-        plt.plot(x_values, y_values)
-        plt.show()
+        plot3d(
+            self._system_equations.equations[0],
+            self._system_equations.equations[1],
+            (self._system_equations.variables[0], self._interval_for_x1[0], self._interval_for_x1[1]),
+            (self._system_equations.variables[1], self._interval_for_x2[0], self._interval_for_x2[1])
+        )
 
     def output_result(self) -> str:
         return f"Найденные корни: X1={self._found_roots[0]} X2={self._found_roots[1]}\n" + \
@@ -199,6 +197,5 @@ def main_for_system_equations():
         return
     solution_method.output_result()
     solution_method.check_calc()
-
     solution_method.draw()
 
