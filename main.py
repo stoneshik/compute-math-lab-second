@@ -49,7 +49,7 @@ class SolutionMethod(ABC):
         number_intervals: int = 100
         func_diff = self._equation.get_diff()
         first_value_diff: float = func_diff.subs(x, self._a).evalf()
-        for i in numpy.arange(self._a, self._b, abs(self._b - self._a) / number_intervals):
+        for i in numpy.linspace(self._a, self._b, number_intervals):
             if first_value_diff * func_diff.subs(x, i).evalf() < 0:
                 print(f"На отрезке [{self._a}; {self._b}] более одного корня")
                 return False
@@ -205,7 +205,7 @@ class SimpleIterationMethod(SolutionMethod):
         b_i: float = self._b
         max_diff_value: float = 0.0
         number_intervals: int = 100
-        for i in numpy.arange(self._a, self._b, abs(self._b - self._a) / number_intervals):
+        for i in numpy.linspace(self._a, self._b, number_intervals):
             f_i = abs(func_diff.subs(x, i).evalf())
             if f_i > max_diff_value:
                 max_diff_value = f_i
