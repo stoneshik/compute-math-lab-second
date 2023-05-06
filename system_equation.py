@@ -33,7 +33,10 @@ class SimpleIterationMethodForSystem:
         self._interval_for_x1 = interval_for_x1
         self._interval_for_x2 = interval_for_x2
         self._epsilon = epsilon
-        self._system_phi_func = None
+        self._system_phi_func = (
+                self._system_equations.equations[0] + self._system_equations.variables[0],
+                self._system_equations.equations[1] + self._system_equations.variables[1]
+        )
         self._field_names_table = ['№ итерации',
                                    'X1(k)', 'X2(k)',
                                    'X1(k+1)', 'X2(k+1)',
@@ -74,6 +77,8 @@ class SimpleIterationMethodForSystem:
             second_equation = Abs(diff(system_phi_func[1], x_1)) + Abs(diff(system_phi_func[1], x_2))
             for x1_value in numpy.linspace(self._interval_for_x1[0], self._interval_for_x1[1], number_intervals):
                 for x2_value in numpy.linspace(self._interval_for_x2[0], self._interval_for_x2[1], number_intervals):
+                    a = first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
+                    b = second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
                     if first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1 or \
                             second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1:
                         break
@@ -204,9 +209,9 @@ def main_for_system_equations():
             0.1 * x1 ** 2 + x1 + 0.2 * x2 ** 2 - 0.3,
             0.2 * x1 ** 2 + x2 + 0.1 * x1 * x2 - 0.7
         )),
-        SystemEquation((  # (-2, 2), (2, -2)
-            3 * x1 ** 2 + 2 * x1 * x2 - x2 ** 2,
-            x1 ** 2 - 3 * x1 * x2 - 16
+        SystemEquation((  # (-1.39, 4.17), (1.331, -3.673)
+            3 * x1 ** 3 + 0.2 * x1 + 2 * x2,
+            x1 - 3 * x1 * x2 - 16
         )),
         SystemEquation((  # (-0.905, 0.381), (1, 0)
             3 * (x1 - x2) ** 2 + 2 * (x1 + 2 * x2) ** 2 - 5,
