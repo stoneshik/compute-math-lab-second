@@ -9,6 +9,7 @@ class SystemEquation:
     """
     Класс для системы уравнений
     """
+
     def __init__(self, equations: tuple) -> None:
         self.equations = equations
         self.variables = (Symbol('x1'), Symbol('x2'))
@@ -21,6 +22,7 @@ class SimpleIterationMethodForSystem:
     """
     Класс для метода простой итерации для системы уравнений
     """
+
     def __init__(self,
                  system_equations: SystemEquation,
                  first_approach: tuple,
@@ -52,17 +54,49 @@ class SimpleIterationMethodForSystem:
         x_2 = self._system_equations.variables[1]
         first_equation = Abs(diff(self._system_phi_func[0], x_1)) + Abs(diff(self._system_phi_func[0], x_2))
         second_equation = Abs(diff(self._system_phi_func[1], x_1)) + Abs(diff(self._system_phi_func[1], x_2))
-        # проверка всех пограничных значений
-        return (
-                first_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[0]}).evalf() < 1 and
-                first_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[0]}).evalf() < 1 and
-                first_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[1]}).evalf() < 1 and
-                first_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[1]}).evalf() < 1 and
-                second_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[0]}).evalf() < 1 and
-                second_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[0]}).evalf() < 1 and
-                second_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[1]}).evalf() < 1 and
-                second_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[1]}).evalf() < 1
+        number_intervals: int = 10
+        for x1_value in numpy.linspace(self._interval_for_x1[0], self._interval_for_x1[1], number_intervals):
+            for x2_value in numpy.linspace(self._interval_for_x2[0], self._interval_for_x2[1], number_intervals):
+                f1 = first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
+                f2 = second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
+                if first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1 or \
+                        second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1:
+                    break
+            else:
+                continue
+            break
+        else:
+            return True
+        self._system_phi_func = (
+            -(self._system_equations.equations[0]) + self._system_equations.variables[0],
+            -(self._system_equations.equations[1]) + self._system_equations.variables[1]
         )
+        first_equation = Abs(diff(self._system_phi_func[0], x_1)) + Abs(diff(self._system_phi_func[0], x_2))
+        second_equation = Abs(diff(self._system_phi_func[1], x_1)) + Abs(diff(self._system_phi_func[1], x_2))
+        for x1_value in numpy.linspace(self._interval_for_x1[0], self._interval_for_x1[1], number_intervals):
+            for x2_value in numpy.linspace(self._interval_for_x2[0], self._interval_for_x2[1], number_intervals):
+                f1 = first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
+                f2 = second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
+                if first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1 or \
+                        second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1:
+                    break
+            else:
+                continue
+            break
+        else:
+            return True
+        return False
+        # проверка всех пограничных значений
+        #return (
+        #        first_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[0]}).evalf() < 1 and
+        #        first_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[0]}).evalf() < 1 and
+        #        first_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[1]}).evalf() < 1 and
+        #        first_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[1]}).evalf() < 1 and
+        #        second_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[0]}).evalf() < 1 and
+        #        second_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[0]}).evalf() < 1 and
+        #        second_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[1]}).evalf() < 1 and
+        #        second_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[1]}).evalf() < 1
+        #)
 
     def calc(self) -> PrettyTable:
         table = PrettyTable()
@@ -187,6 +221,7 @@ def main_for_system_equations():
         )),
     )
     solution_method = input_data(systems_equation)
+    solution_method.draw()
     if solution_method is None:
         return
     if not solution_method.check_convergence():
@@ -198,4 +233,3 @@ def main_for_system_equations():
     solution_method.output_result()
     solution_method.check_calc()
     solution_method.draw()
-
