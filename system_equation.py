@@ -120,7 +120,7 @@ class SimpleIterationMethodForSystem:
         return table
 
     def check_calc(self):
-        print("Для оценки полученного ответа рассчитаем вектор невязки")
+        print("Для оценки полученного ответа рассчитан вектор невязки")
         x_1 = self._system_equations.variables[0]
         x_2 = self._system_equations.variables[1]
         r1 = self._system_equations.equations[0].subs(
@@ -133,8 +133,8 @@ class SimpleIterationMethodForSystem:
         plot3d(
             self._system_equations.equations[0],
             self._system_equations.equations[1],
-            (self._system_equations.variables[0], self._interval_for_x1[0], self._interval_for_x1[1]),
-            (self._system_equations.variables[1], self._interval_for_x2[0], self._interval_for_x2[1])
+            (self._system_equations.variables[0], self._interval_for_x1[0] - 1, self._interval_for_x1[1] + 1),
+            (self._system_equations.variables[1], self._interval_for_x2[0] - 1, self._interval_for_x2[1] + 1)
         )
 
     def output_result(self) -> str:
