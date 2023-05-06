@@ -14,7 +14,7 @@ class SystemEquation:
         self.variables = variables
 
     def get_string(self) -> str:
-        return f"f1(x1, x2)={latex(self.equations[0])}\n   f2(x1, x2)={latex(self.equations[1])}"
+        return f"f1(x1, x2)={latex(self.equations[0])}=0\n   f2(x1, x2)={latex(self.equations[1])}=0"
 
 
 class SimpleIterationMethodForSystem:
@@ -67,7 +67,7 @@ class SimpleIterationMethodForSystem:
                 -(self._system_equations.equations[1]) + self._system_equations.variables[1]
             ),
         )
-        number_intervals: int = 10
+        number_intervals: int = 2
         for system_phi_func in all_variants_system_phi_func:
             self._system_phi_func = system_phi_func
             first_equation = Abs(diff(system_phi_func[0], x_1)) + Abs(diff(system_phi_func[0], x_2))
@@ -133,8 +133,8 @@ class SimpleIterationMethodForSystem:
         plot3d(
             self._system_equations.equations[0],
             self._system_equations.equations[1],
-            (self._system_equations.variables[0], self._interval_for_x1[0] - 1, self._interval_for_x1[1] + 1),
-            (self._system_equations.variables[1], self._interval_for_x2[0] - 1, self._interval_for_x2[1] + 1)
+            (self._system_equations.variables[0], self._interval_for_x1[0], self._interval_for_x1[1]),
+            (self._system_equations.variables[1], self._interval_for_x2[0], self._interval_for_x2[1])
         )
 
     def output_result(self) -> str:
@@ -146,7 +146,7 @@ class SimpleIterationMethodForSystem:
 def input_intervals(approach_value: float) -> tuple:
     while True:
         min_value, max_value = (
-            float(i) for i in input("Введите значения минимума и максимум через пробел...\n").split())
+            float(i) for i in input("Введите значения минимума и максимума через пробел...\n").split())
         if min_value == max_value:
             print("Введенные значения должны отличаться")
             continue
@@ -199,21 +199,30 @@ def input_data(systems_equation) -> SimpleIterationMethodForSystem:
 def main_for_system_equations():
     x1 = Symbol('x1')
     x2 = Symbol('x2')
-    # ссылка на Desmos с графиками https://www.desmos.com/calculator/b8cfcxolgp
     systems_equation = (
         SystemEquation((
             0.1 * x1 ** 2 + x1 + 0.2 * x2 ** 2 - 0.3,
             0.2 * x1 ** 2 + x2 + 0.1 * x1 * x2 - 0.7
         )),
+        SystemEquation((  # (-2, 2), (2, -2)
+            3 * x1 ** 2 + 2 * x1 * x2 - x2 ** 2,
+            x1 ** 2 - 3 * x1 * x2 - 16
+        )),
+        SystemEquation((  # (-0.905, 0.381), (1, 0)
+            3 * (x1 - x2) ** 2 + 2 * (x1 + 2 * x2) ** 2 - 5,
+            2 * (x1 + 2 * x2) - x1 + x2 - 1
+        ))
     )
     solution_method = input_data(systems_equation)
     if solution_method is None:
         return
     if not solution_method.check_convergence():
         print("Уравнение не сходится в выбранной области")
+        solution_method.draw()
         return
     table: PrettyTable = solution_method.calc()
     if table is None:
+        solution_method.draw()
         return
     print(table)
     print(solution_method.output_result())
