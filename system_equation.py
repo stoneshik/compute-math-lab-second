@@ -25,13 +25,13 @@ class SimpleIterationMethodForSystem:
     def __init__(self,
                  system_equations: SystemEquation,
                  first_approach: tuple,
-                 interval_for_x1: tuple,
-                 interval_for_x2: tuple,
+                 #interval_for_x1: tuple,
+                 #interval_for_x2: tuple,
                  epsilon: float = 0.001) -> None:
         self._system_equations = system_equations
         self._first_approach = first_approach
-        self._interval_for_x1 = interval_for_x1
-        self._interval_for_x2 = interval_for_x2
+        #self._interval_for_x1 = interval_for_x1
+        #self._interval_for_x2 = interval_for_x2
         self._epsilon = epsilon
         self._system_phi_func = (
                 self._system_equations.equations[0] + self._system_equations.variables[0],
@@ -45,7 +45,7 @@ class SimpleIterationMethodForSystem:
         self._vector_errors = (0.0, 0.0)
         self._num_iteration_for_found: int = 0
 
-    def check_convergence(self) -> bool:
+    def create_phi(self) -> bool:
         """
         Проверка сходимости
         :return: Сходится или нет
@@ -70,26 +70,23 @@ class SimpleIterationMethodForSystem:
                 -(self._system_equations.equations[1]) + self._system_equations.variables[1]
             ),
         )
-        number_intervals: int = 2
         for system_phi_func in all_variants_system_phi_func:
             self._system_phi_func = system_phi_func
             first_equation = Abs(diff(system_phi_func[0], x_1)) + Abs(diff(system_phi_func[0], x_2))
             second_equation = Abs(diff(system_phi_func[1], x_1)) + Abs(diff(system_phi_func[1], x_2))
-            for x1_value in numpy.linspace(self._interval_for_x1[0], self._interval_for_x1[1], number_intervals):
-                for x2_value in numpy.linspace(self._interval_for_x2[0], self._interval_for_x2[1], number_intervals):
-                    a = first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
-                    b = second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
-                    if first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1 or \
-                            second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1:
-                        break
-                else:
-                    continue
-                break
-            else:
+            if self._check_convergence(first_equation, second_equation, self._first_approach):
                 return True
         return False
 
-    def calc(self) -> PrettyTable:
+    def _check_convergence(self, first_equation, second_equation, approach) -> bool:
+        x_1 = self._system_equations.variables[0]
+        x_2 = self._system_equations.variables[1]
+        if first_equation.subs({x_1: approach[0], x_2: approach[1]}).evalf() >= 1 or \
+                second_equation.subs({x_1: approach[0], x_2: approach[1]}).evalf() >= 1:
+            return False
+        return True
+
+    def calc(self) -> (PrettyTable, None):
         table = PrettyTable()
         table.field_names = self._field_names_table
         x_1 = self._system_equations.variables[0]
@@ -99,6 +96,10 @@ class SimpleIterationMethodForSystem:
             self._system_phi_func[0].subs({x_1: approach_k[0], x_2: approach_k[1]}).evalf(),
             self._system_phi_func[1].subs({x_1: approach_k[0], x_2: approach_k[1]}).evalf()
         )
+        first_equation = Abs(diff(self._system_phi_func[0], x_1)) + Abs(diff(self._system_phi_func[0], x_2))
+        second_equation = Abs(diff(self._system_phi_func[1], x_1)) + Abs(diff(self._system_phi_func[1], x_2))
+        if not self._check_convergence(first_equation, second_equation, approach_k_plus_1):
+            return None
         table.add_row(['0', approach_k[0], approach_k[1],
                        approach_k_plus_1[0], approach_k_plus_1[1],
                        abs(approach_k_plus_1[0] - approach_k[0]),
@@ -111,6 +112,8 @@ class SimpleIterationMethodForSystem:
                 self._system_phi_func[0].subs({x_1: approach_k[0], x_2: approach_k[1]}).evalf(),
                 self._system_phi_func[1].subs({x_1: approach_k[0], x_2: approach_k[1]}).evalf()
             )
+            if not self._check_convergence(first_equation, second_equation, approach_k_plus_1):
+                return None
             table.add_row([num_iter, approach_k[0], approach_k[1],
                            approach_k_plus_1[0], approach_k_plus_1[1],
                            abs(approach_k_plus_1[0] - approach_k[0]),
@@ -138,8 +141,8 @@ class SimpleIterationMethodForSystem:
         plot3d(
             self._system_equations.equations[0],
             self._system_equations.equations[1],
-            (self._system_equations.variables[0], self._interval_for_x1[0], self._interval_for_x1[1]),
-            (self._system_equations.variables[1], self._interval_for_x2[0], self._interval_for_x2[1])
+            (self._system_equations.variables[0], self._first_approach[0] - 5, self._first_approach[0] + 5),
+            (self._system_equations.variables[1], self._first_approach[1] - 5, self._first_approach[1] + 5)
         )
 
     def output_result(self) -> str:
@@ -183,22 +186,24 @@ def input_data(systems_equation) -> SimpleIterationMethodForSystem:
             print("Должно быть введено 2 значения")
             continue
         break
-    print("Определение области сходимости G")
-    print("Введите значения интервала для x1")
-    interval_for_x1: tuple = input_intervals(first_approach[0])
-    print("Введите значения интервала для x2")
-    interval_for_x2: tuple = input_intervals(first_approach[1])
+    #print("Определение области сходимости G")
+    #print("Введите значения интервала для x1")
+    #interval_for_x1: tuple = input_intervals(first_approach[0])
+    #print("Введите значения интервала для x2")
+    #interval_for_x2: tuple = input_intervals(first_approach[1])
     while True:
         epsilon = input(
             "Введите погрешность вычислений (чтобы оставить значение по умолчанию - 0,001 нажмите Enter)...\n")
         if epsilon == '':
-            return SimpleIterationMethodForSystem(system_equation, first_approach, interval_for_x1, interval_for_x2)
+            return SimpleIterationMethodForSystem(system_equation, first_approach)
+            #return SimpleIterationMethodForSystem(system_equation, first_approach, interval_for_x1, interval_for_x2)
         epsilon = float(epsilon)
         if epsilon <= 0:
             print("Значение погрешности должно быть больше нуля")
             continue
-        return SimpleIterationMethodForSystem(
-            system_equation, first_approach, interval_for_x1, interval_for_x2, epsilon)
+        return SimpleIterationMethodForSystem(system_equation, first_approach, epsilon)
+        #return SimpleIterationMethodForSystem(
+        #    system_equation, first_approach, interval_for_x1, interval_for_x2, epsilon)
 
 
 def main_for_system_equations():
@@ -221,12 +226,13 @@ def main_for_system_equations():
     solution_method = input_data(systems_equation)
     if solution_method is None:
         return
-    if not solution_method.check_convergence():
-        print("Уравнение не сходится в выбранной области")
+    if not solution_method.create_phi():
+        print("Уравнение не сходится для выбранного приближения")
         solution_method.draw()
         return
     table: PrettyTable = solution_method.calc()
     if table is None:
+        print("Уравнение не сходится для выбранного приближения")
         solution_method.draw()
         return
     print(table)
