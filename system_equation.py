@@ -129,10 +129,10 @@ class SimpleIterationMethodForSystem:
         x_1 = self._system_equations.variables[0]
         x_2 = self._system_equations.variables[1]
         r1 = self._system_equations.equations[0].subs(
-            {x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[0]}).evalf()
+            {x_1: self._found_roots[0], x_2: self._found_roots[1]}).evalf()
         r2 = self._system_equations.equations[1].subs(
-            {x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[0]}).evalf()
-        print(f"r1 = {r1}\nr2 = {r2}")
+            {x_1: self._found_roots[0], x_2: self._found_roots[1]}).evalf()
+        print(f"r[1] = {r1}\nr[2] = {r2}")
 
     def draw(self) -> None:
         plot3d(
@@ -212,7 +212,6 @@ def main_for_system_equations():
         )),
     )
     solution_method = input_data(systems_equation)
-    solution_method.draw()
     if solution_method is None:
         return
     if not solution_method.check_convergence():
@@ -221,6 +220,7 @@ def main_for_system_equations():
     table: PrettyTable = solution_method.calc()
     if table is None:
         return
-    solution_method.output_result()
+    print(table)
+    print(solution_method.output_result())
     solution_method.check_calc()
     solution_method.draw()
