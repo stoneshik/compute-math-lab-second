@@ -1,5 +1,4 @@
 import numpy
-import matplotlib.pyplot as plt
 from prettytable import PrettyTable
 from sympy import latex, diff, Symbol, Abs
 from sympy.plotting import plot3d
@@ -10,12 +9,12 @@ class SystemEquation:
     Класс для системы уравнений
     """
 
-    def __init__(self, equations: tuple) -> None:
+    def __init__(self, equations: tuple, variables: tuple = (Symbol('x1'), Symbol('x2'))) -> None:
         self.equations = equations
-        self.variables = (Symbol('x1'), Symbol('x2'))
+        self.variables = variables
 
     def get_string(self) -> str:
-        return f"f1(x1, x2)={latex(self.equations[0])}\n  f2(x1, x2)={latex(self.equations[1])}"
+        return f"f1(x1, x2)={latex(self.equations[0])}\n   f2(x1, x2)={latex(self.equations[1])}"
 
 
 class SimpleIterationMethodForSystem:
@@ -34,7 +33,7 @@ class SimpleIterationMethodForSystem:
         self._interval_for_x1 = interval_for_x1
         self._interval_for_x2 = interval_for_x2
         self._epsilon = epsilon
-        self._system_phi_func = self._create_system_phi_func()
+        self._system_phi_func = None
         self._field_names_table = ['№ итерации',
                                    'X1(k)', 'X2(k)',
                                    'X1(k+1)', 'X2(k+1)',
@@ -43,13 +42,11 @@ class SimpleIterationMethodForSystem:
         self._vector_errors = (0.0, 0.0)
         self._num_iteration_for_found: int = 0
 
-    def _create_system_phi_func(self) -> tuple:
-        return (
-            self._system_equations.equations[0] + self._system_equations.variables[0],
-            self._system_equations.equations[1] + self._system_equations.variables[1]
-        )
-
     def check_convergence(self) -> bool:
+        """
+        Проверка сходимости
+        :return: Сходится или нет
+        """
         x_1 = self._system_equations.variables[0]
         x_2 = self._system_equations.variables[1]
         all_variants_system_phi_func = (
@@ -77,8 +74,6 @@ class SimpleIterationMethodForSystem:
             second_equation = Abs(diff(system_phi_func[1], x_1)) + Abs(diff(system_phi_func[1], x_2))
             for x1_value in numpy.linspace(self._interval_for_x1[0], self._interval_for_x1[1], number_intervals):
                 for x2_value in numpy.linspace(self._interval_for_x2[0], self._interval_for_x2[1], number_intervals):
-                    f1 = first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
-                    f2 = second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
                     if first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1 or \
                             second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1:
                         break
@@ -143,7 +138,7 @@ class SimpleIterationMethodForSystem:
         )
 
     def output_result(self) -> str:
-        return f"Найденные корни: X1={self._found_roots[0]} X2={self._found_roots[1]}\n" + \
+        return f"Найденные корни: x[1]={self._found_roots[0]} x[2]={self._found_roots[1]}\n" + \
                f"Вектор погрешностей: ({self._vector_errors[0]}, {self._vector_errors[1]})" + \
                f"\nЧисло итераций: {self._num_iteration_for_found}"
 
