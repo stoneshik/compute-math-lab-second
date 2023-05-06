@@ -52,51 +52,42 @@ class SimpleIterationMethodForSystem:
     def check_convergence(self) -> bool:
         x_1 = self._system_equations.variables[0]
         x_2 = self._system_equations.variables[1]
-        first_equation = Abs(diff(self._system_phi_func[0], x_1)) + Abs(diff(self._system_phi_func[0], x_2))
-        second_equation = Abs(diff(self._system_phi_func[1], x_1)) + Abs(diff(self._system_phi_func[1], x_2))
-        number_intervals: int = 10
-        for x1_value in numpy.linspace(self._interval_for_x1[0], self._interval_for_x1[1], number_intervals):
-            for x2_value in numpy.linspace(self._interval_for_x2[0], self._interval_for_x2[1], number_intervals):
-                f1 = first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
-                f2 = second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
-                if first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1 or \
-                        second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1:
-                    break
-            else:
-                continue
-            break
-        else:
-            return True
-        self._system_phi_func = (
-            -(self._system_equations.equations[0]) + self._system_equations.variables[0],
-            -(self._system_equations.equations[1]) + self._system_equations.variables[1]
+        all_variants_system_phi_func = (
+            (
+                self._system_equations.equations[0] + self._system_equations.variables[0],
+                self._system_equations.equations[1] + self._system_equations.variables[1]
+            ),
+            (
+                -(self._system_equations.equations[0]) + self._system_equations.variables[0],
+                self._system_equations.equations[1] + self._system_equations.variables[1]
+            ),
+            (
+                self._system_equations.equations[0] + self._system_equations.variables[0],
+                -(self._system_equations.equations[1]) + self._system_equations.variables[1]
+            ),
+            (
+                -(self._system_equations.equations[0]) + self._system_equations.variables[0],
+                -(self._system_equations.equations[1]) + self._system_equations.variables[1]
+            ),
         )
-        first_equation = Abs(diff(self._system_phi_func[0], x_1)) + Abs(diff(self._system_phi_func[0], x_2))
-        second_equation = Abs(diff(self._system_phi_func[1], x_1)) + Abs(diff(self._system_phi_func[1], x_2))
-        for x1_value in numpy.linspace(self._interval_for_x1[0], self._interval_for_x1[1], number_intervals):
-            for x2_value in numpy.linspace(self._interval_for_x2[0], self._interval_for_x2[1], number_intervals):
-                f1 = first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
-                f2 = second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
-                if first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1 or \
-                        second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1:
-                    break
+        number_intervals: int = 10
+        for system_phi_func in all_variants_system_phi_func:
+            self._system_phi_func = system_phi_func
+            first_equation = Abs(diff(system_phi_func[0], x_1)) + Abs(diff(system_phi_func[0], x_2))
+            second_equation = Abs(diff(system_phi_func[1], x_1)) + Abs(diff(system_phi_func[1], x_2))
+            for x1_value in numpy.linspace(self._interval_for_x1[0], self._interval_for_x1[1], number_intervals):
+                for x2_value in numpy.linspace(self._interval_for_x2[0], self._interval_for_x2[1], number_intervals):
+                    f1 = first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
+                    f2 = second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf()
+                    if first_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1 or \
+                            second_equation.subs({x_1: x1_value, x_2: x2_value}).evalf() >= 1:
+                        break
+                else:
+                    continue
+                break
             else:
-                continue
-            break
-        else:
-            return True
+                return True
         return False
-        # проверка всех пограничных значений
-        #return (
-        #        first_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[0]}).evalf() < 1 and
-        #        first_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[0]}).evalf() < 1 and
-        #        first_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[1]}).evalf() < 1 and
-        #        first_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[1]}).evalf() < 1 and
-        #        second_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[0]}).evalf() < 1 and
-        #        second_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[0]}).evalf() < 1 and
-        #        second_equation.subs({x_1: self._interval_for_x1[0], x_2: self._interval_for_x2[1]}).evalf() < 1 and
-        #        second_equation.subs({x_1: self._interval_for_x1[1], x_2: self._interval_for_x2[1]}).evalf() < 1
-        #)
 
     def calc(self) -> PrettyTable:
         table = PrettyTable()
