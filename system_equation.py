@@ -1,4 +1,4 @@
-import numpy
+import numpy.ma
 from prettytable import PrettyTable
 from sympy import latex, diff, Symbol, Abs
 from sympy.plotting import plot3d
@@ -22,16 +22,9 @@ class SimpleIterationMethodForSystem:
     Класс для метода простой итерации для системы уравнений
     """
 
-    def __init__(self,
-                 system_equations: SystemEquation,
-                 first_approach: tuple,
-                 #interval_for_x1: tuple,
-                 #interval_for_x2: tuple,
-                 epsilon: float = 0.001) -> None:
+    def __init__(self, system_equations: SystemEquation, first_approach: tuple, epsilon: float = 0.001) -> None:
         self._system_equations = system_equations
         self._first_approach = first_approach
-        #self._interval_for_x1 = interval_for_x1
-        #self._interval_for_x2 = interval_for_x2
         self._epsilon = epsilon
         self._system_phi_func = (
                 self._system_equations.equations[0] + self._system_equations.variables[0],
@@ -44,6 +37,14 @@ class SimpleIterationMethodForSystem:
         self._found_roots = (0.0, 0.0)
         self._vector_errors = (0.0, 0.0)
         self._num_iteration_for_found: int = 0
+
+    def _check_convergence(self, first_equation, second_equation, approach) -> bool:
+        x_1 = self._system_equations.variables[0]
+        x_2 = self._system_equations.variables[1]
+        if first_equation.subs({x_1: approach[0], x_2: approach[1]}).evalf() >= 1 or \
+                second_equation.subs({x_1: approach[0], x_2: approach[1]}).evalf() >= 1:
+            return False
+        return True
 
     def create_phi(self) -> bool:
         """
@@ -77,14 +78,6 @@ class SimpleIterationMethodForSystem:
             if self._check_convergence(first_equation, second_equation, self._first_approach):
                 return True
         return False
-
-    def _check_convergence(self, first_equation, second_equation, approach) -> bool:
-        x_1 = self._system_equations.variables[0]
-        x_2 = self._system_equations.variables[1]
-        if first_equation.subs({x_1: approach[0], x_2: approach[1]}).evalf() >= 1 or \
-                second_equation.subs({x_1: approach[0], x_2: approach[1]}).evalf() >= 1:
-            return False
-        return True
 
     def calc(self) -> (PrettyTable, None):
         table = PrettyTable()
@@ -138,33 +131,19 @@ class SimpleIterationMethodForSystem:
         print(f"r[1] = {r1}\nr[2] = {r2}")
 
     def draw(self) -> None:
+        x1_value: float = self._first_approach[0] if self._first_approach[0] != 0 else 0.01
+        x2_value: float = self._first_approach[1] if self._first_approach[1] != 0 else 0.01
         plot3d(
             self._system_equations.equations[0],
             self._system_equations.equations[1],
-            (self._system_equations.variables[0], self._first_approach[0] - 5, self._first_approach[0] + 5),
-            (self._system_equations.variables[1], self._first_approach[1] - 5, self._first_approach[1] + 5)
+            (self._system_equations.variables[0], x1_value - abs(x1_value) * 3, x1_value + abs(x1_value) * 3),
+            (self._system_equations.variables[1], x2_value - abs(x2_value) * 3, x2_value + abs(x2_value) * 3)
         )
 
     def output_result(self) -> str:
         return f"Найденные корни: x[1]={self._found_roots[0]} x[2]={self._found_roots[1]}\n" + \
                f"Вектор погрешностей: ({self._vector_errors[0]}, {self._vector_errors[1]})" + \
                f"\nЧисло итераций: {self._num_iteration_for_found}"
-
-
-def input_intervals(approach_value: float) -> tuple:
-    while True:
-        min_value, max_value = (
-            float(i) for i in input("Введите значения минимума и максимума через пробел...\n").split())
-        if min_value == max_value:
-            print("Введенные значения должны отличаться")
-            continue
-        if min_value > max_value:
-            print("Сначала должен быть введен минимум, а потом максимум")
-            continue
-        if approach_value < min_value or approach_value > max_value:
-            print("Введенный интервал не покрывает приближение")
-            continue
-        return min_value, max_value
 
 
 def input_data(systems_equation) -> SimpleIterationMethodForSystem:
@@ -186,24 +165,34 @@ def input_data(systems_equation) -> SimpleIterationMethodForSystem:
             print("Должно быть введено 2 значения")
             continue
         break
-    #print("Определение области сходимости G")
-    #print("Введите значения интервала для x1")
-    #interval_for_x1: tuple = input_intervals(first_approach[0])
-    #print("Введите значения интервала для x2")
-    #interval_for_x2: tuple = input_intervals(first_approach[1])
     while True:
         epsilon = input(
             "Введите погрешность вычислений (чтобы оставить значение по умолчанию - 0,001 нажмите Enter)...\n")
         if epsilon == '':
             return SimpleIterationMethodForSystem(system_equation, first_approach)
-            #return SimpleIterationMethodForSystem(system_equation, first_approach, interval_for_x1, interval_for_x2)
         epsilon = float(epsilon)
         if epsilon <= 0:
             print("Значение погрешности должно быть больше нуля")
             continue
         return SimpleIterationMethodForSystem(system_equation, first_approach, epsilon)
-        #return SimpleIterationMethodForSystem(
-        #    system_equation, first_approach, interval_for_x1, interval_for_x2, epsilon)
+
+
+def find_roots(systems_equation):
+    for i in numpy.ma.arange(-5, 5, 0.05):
+        for j in numpy.ma.arange(-5, 5, 0.05):
+            solution_method = SimpleIterationMethodForSystem(systems_equation[1], (i, j))
+            if not solution_method.create_phi():
+                continue
+                # print(f"не сходится в x1 {i}, x2 {j}")
+            table: PrettyTable = solution_method.calc()
+            if table is None:
+                continue
+            print(f"!!Сходится в x1 {i}, x2 {j}!!")
+            print(table)
+            print(solution_method.output_result())
+            solution_method.check_calc()
+    solution_method = SimpleIterationMethodForSystem(systems_equation[1], (1, 1))
+    solution_method.draw()
 
 
 def main_for_system_equations():
@@ -211,18 +200,31 @@ def main_for_system_equations():
     x2 = Symbol('x2')
     systems_equation = (
         SystemEquation((
-            0.1 * x1 ** 2 + x1 + 0.2 * x2 ** 2 - 0.3,
-            0.2 * x1 ** 2 + x2 + 0.1 * x1 * x2 - 0.7
+            0.1 * x1 ** 2 + x1 + 0.2 * x2 ** 2 - 0.7,
+            0.2 * x1 ** 2 + x2 + 0.1 * x1 * x2 + 0.2
         )),
-        SystemEquation((  # (-1.39, 4.17), (1.331, -3.673)
-            3 * x1 ** 3 + 0.2 * x1 + 2 * x2,
-            x1 - 3 * x1 * x2 - 16
+        SystemEquation((  # (-0.542, -0.443), (-0.507, 0.431)
+            -1.28 * x1 ** 2 + x1 - 1.18,
+            x2 + 2.15 * x2 ** 2 + 0.2975
         )),
-        SystemEquation((  # (-0.905, 0.381), (1, 0)
-            3 * (x1 - x2) ** 2 + 2 * (x1 + 2 * x2) ** 2 - 5,
-            2 * (x1 + 2 * x2) - x1 + x2 - 1
+        #2 * x1 ** 2 + x1 + 3 * x2 ** 2 - 3.2,
+        #3 * x1 ** 2 + x2 + 2 * x1 * x2 - 5.1
+        SystemEquation((  # (0.215662019762792, -0.283442856271809); (0.222396612040603, -0.286924516156778)
+            1.14 * x1 ** 2 - x1 + 0.48 * x2 ** 2 + 0.125,
+            -2 * x1 ** 2 - x2 - 0.8 * x1 * x2 - 0.24
         ))
     )
+    """for i in range(-20, 20):
+        for j in range(-20, 20):
+            solution_method = SimpleIterationMethodForSystem(systems_equation[1], (i, j))
+            if not solution_method.create_phi():
+                pass
+                # print(f"не сходится в x1 {i}, x2 {j}")
+            else:
+                print(f"!!Сходится в x1 {i}, x2 {j}!!")
+    return"""
+    find_roots(systems_equation)
+    return
     solution_method = input_data(systems_equation)
     if solution_method is None:
         return
