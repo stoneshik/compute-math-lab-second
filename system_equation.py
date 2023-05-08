@@ -177,13 +177,12 @@ def input_data(systems_equation) -> SimpleIterationMethodForSystem:
         return SimpleIterationMethodForSystem(system_equation, first_approach, epsilon)
 
 
-def find_roots(systems_equation):
-    for i in numpy.ma.arange(-5, 5, 0.05):
-        for j in numpy.ma.arange(-5, 5, 0.05):
-            solution_method = SimpleIterationMethodForSystem(systems_equation[1], (i, j))
+def find_roots(system_equation):
+    for i in numpy.ma.arange(-5, 5, 0.5):
+        for j in numpy.ma.arange(-5, 5, 0.5):
+            solution_method = SimpleIterationMethodForSystem(system_equation, (i, j))
             if not solution_method.create_phi():
                 continue
-                # print(f"не сходится в x1 {i}, x2 {j}")
             table: PrettyTable = solution_method.calc()
             if table is None:
                 continue
@@ -191,7 +190,7 @@ def find_roots(systems_equation):
             print(table)
             print(solution_method.output_result())
             solution_method.check_calc()
-    solution_method = SimpleIterationMethodForSystem(systems_equation[1], (1, 1))
+    solution_method = SimpleIterationMethodForSystem(system_equation, (1, 1))
     solution_method.draw()
 
 
@@ -203,28 +202,15 @@ def main_for_system_equations():
             0.1 * x1 ** 2 + x1 + 0.2 * x2 ** 2 - 0.7,
             0.2 * x1 ** 2 + x2 + 0.1 * x1 * x2 + 0.2
         )),
-        SystemEquation((  # (-0.542, -0.443), (-0.507, 0.431)
-            -1.28 * x1 ** 2 + x1 - 1.18,
-            x2 + 2.15 * x2 ** 2 + 0.2975
+        SystemEquation((  # (-5.08768281927155, 1.76517638616782), (1.53364023080055, 1.76380044018342)
+            0.28 * x1 ** 2 + x1 - 2.18,
+            0.15 * x2 ** 2 - x2 + 1.2975
         )),
-        #2 * x1 ** 2 + x1 + 3 * x2 ** 2 - 3.2,
-        #3 * x1 ** 2 + x2 + 2 * x1 * x2 - 5.1
         SystemEquation((  # (0.215662019762792, -0.283442856271809); (0.222396612040603, -0.286924516156778)
             1.14 * x1 ** 2 - x1 + 0.48 * x2 ** 2 + 0.125,
             -2 * x1 ** 2 - x2 - 0.8 * x1 * x2 - 0.24
         ))
     )
-    """for i in range(-20, 20):
-        for j in range(-20, 20):
-            solution_method = SimpleIterationMethodForSystem(systems_equation[1], (i, j))
-            if not solution_method.create_phi():
-                pass
-                # print(f"не сходится в x1 {i}, x2 {j}")
-            else:
-                print(f"!!Сходится в x1 {i}, x2 {j}!!")
-    return"""
-    find_roots(systems_equation)
-    return
     solution_method = input_data(systems_equation)
     if solution_method is None:
         return
