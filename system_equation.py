@@ -1,7 +1,6 @@
 import numpy.ma
 from prettytable import PrettyTable
 from sympy import latex, diff, Symbol, Abs, plot_implicit, Eq
-#from sympy.plotting import plot3d
 
 
 class SystemEquation:
