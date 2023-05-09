@@ -1,7 +1,7 @@
 import numpy.ma
 from prettytable import PrettyTable
-from sympy import latex, diff, Symbol, Abs
-from sympy.plotting import plot3d
+from sympy import latex, diff, Symbol, Abs, plot_implicit, Eq
+#from sympy.plotting import plot3d
 
 
 class SystemEquation:
@@ -131,14 +131,20 @@ class SimpleIterationMethodForSystem:
         print(f"r[1] = {r1}\nr[2] = {r2}")
 
     def draw(self) -> None:
-        x1_value: float = self._first_approach[0] if self._first_approach[0] != 0 else 0.01
-        x2_value: float = self._first_approach[1] if self._first_approach[1] != 0 else 0.01
-        plot3d(
-            self._system_equations.equations[0],
-            self._system_equations.equations[1],
-            (self._system_equations.variables[0], x1_value - abs(x1_value) * 3, x1_value + abs(x1_value) * 3),
-            (self._system_equations.variables[1], x2_value - abs(x2_value) * 3, x2_value + abs(x2_value) * 3)
-        )
+        x1_value: float = self._first_approach[0] if self._first_approach[0] != 0 else 0.1
+        x2_value: float = self._first_approach[1] if self._first_approach[1] != 0 else 0.1
+        plot_first = plot_implicit(
+            Eq(self._system_equations.equations[0], 0),
+            (self._system_equations.variables[0], x1_value - abs(x1_value) * 5, x1_value + abs(x1_value) * 5),
+            (self._system_equations.variables[1], x2_value - abs(x2_value) * 5, x2_value + abs(x2_value) * 5),
+            line_color='steelblue', show=False)
+        plot_second = plot_implicit(
+            Eq(self._system_equations.equations[1], 0),
+            (self._system_equations.variables[0], x1_value - abs(x1_value) * 5, x1_value + abs(x1_value) * 5),
+            (self._system_equations.variables[1], x2_value - abs(x2_value) * 5, x2_value + abs(x2_value) * 5),
+            line_color='crimson', show=False)
+        plot_first.append(plot_second[0])
+        plot_first.show()
 
     def output_result(self) -> str:
         return f"Найденные корни: x[1]={self._found_roots[0]} x[2]={self._found_roots[1]}\n" + \
