@@ -198,7 +198,7 @@ def main_for_system_equations():
     x1 = Symbol('x1')
     x2 = Symbol('x2')
     systems_equation = (
-        SystemEquation((
+        SystemEquation((  # (0.643775639051623, -0.265364473486049)
             0.1 * x1 ** 2 + x1 + 0.2 * x2 ** 2 - 0.7,
             0.2 * x1 ** 2 + x2 + 0.1 * x1 * x2 + 0.2
         )),
